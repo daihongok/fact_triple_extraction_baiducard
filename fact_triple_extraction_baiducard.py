@@ -66,42 +66,40 @@ def extraction_start(in_file_name, out_file_name, begin_line, end_line):
         begin_line: 读文件的起始行
         end_line: 读文件的结束行
     """
-    in_file = open(in_file_name, 'r')
+    #in_file = open(in_file_name, 'r')
     out_file = open(out_file_name, 'a')
 
     line_index = 1
     sentence_number = 0
-    text_line = in_file.readline()
-    while text_line:
-        if line_index < begin_line:
-            text_line = in_file.readline()
+    #text_line = in_file.readline()
+
+    with open(in_file_name, 'r') as in_file:
+        for text_line in in_file:
+            if line_index < begin_line:
+                line_index += 1
+                continue
+            if end_line != 0 and line_index > end_line:
+                break
+            sentence = text_line.strip()
+            if sentence == "":
+                line_index += 1
+                continue
+            wordlist = re.split(r'[\t]', sentence)
+            if(wordlist[1] != "BaiduCARD"):
+                line_index += 1
+                continue
+            try:
+                extract_one_card(wordlist[2], wordlist[0], out_file)
+                out_file.flush()
+            except:
+                pass
+            sentence_number += 1
+            if sentence_number % 50 == 0:
+                print
+                "%d done" % (sentence_number)
             line_index += 1
-            continue
-        if end_line != 0 and line_index > end_line:
-            break
-        sentence = text_line.strip()
-        if sentence == "":
-            text_line = in_file.readline()
-            line_index += 1
-            continue
-        wordlist = re.split(r'[\t]', sentence)
-        if(wordlist[1] != "BaiduCARD"):
-            text_line = in_file.readline()
-            line_index += 1
-            continue
-        try:
-            extract_one_card(wordlist[2], wordlist[0], out_file)
-            out_file.flush()
-        except:
-            pass
-        sentence_number += 1
-        if sentence_number % 50 == 0:
-            print
-            "%d done" % (sentence_number)
-        text_line = in_file.readline()
-        line_index += 1
-    in_file.close()
-    out_file.close()
+        in_file.close()
+        out_file.close()
 
 
 def extract_one_card(paragraph, keyword, out_file):
@@ -110,7 +108,7 @@ def extract_one_card(paragraph, keyword, out_file):
     """
     sents = SentenceSplitter.split(paragraph)
     sentslist = list(sents)
-    similarThreshold = 0.85 ;
+    similarThreshold = 0.9 ;
     for sentence in sentslist:
         try:
             fact_triple_extract(sentence, keyword, similarThreshold, out_file)
